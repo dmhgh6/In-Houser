@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+<!-- Navbar -->
+{% block navbar %}
+
+    <a href="{% url 'model_form_upload' %}" class="w3-bar-item w3-button">Upload Demo</a>
+
+{% endblock %}
+
+<!-- Body -->
+{% block content %}
+
+    <title>In House Stats</title>
+
+    <table id="stats">
+        <tr style="cursor:pointer">
+            <th onclick="sortTable(0)" >Player</th>
+            <th onclick="sortTable(1)" >Kills</th>
+            <th onclick="sortTable(2)" >Assists</th>
+            <th onclick="sortTable(3)" >Deaths</th>
+            <th onclick="sortTable(4)" >KDA</th>
+            <th onclick="sortTable(5)" >MVPs</th>
+            <th onclick="sortTable(6)" >Rounds Played</th>
+            <th onclick="sortTable(7)" >Rounds Won</th>
+            <th onclick="sortTable(8)" >Round Win %</th>
+            <th onclick="sortTable(9)" >Kills/Round</th>
+            <th onclick="sortTable(10)" >Assists/Round</th>
+            <th onclick="sortTable(11)" >Deaths/Round</th>
+            <th onclick="sortTable(12)" >MVPs/Game</th>
+            <th onclick="sortTable(13)" >Games Played</th>
+            <th onclick="sortTable(14)" >Games Won</th>
+            <th onclick="sortTable(15)" >Game Win %</th>
+        </tr>
+        {% if playerList %}
+        {% for i in playerList %}
+        <tr align="right">
+            <td align="left">{{ i.name }}</td>
+            <td>{{ i.kills }}</td>
+            <td>{{ i.assists }}</td>
+            <td>{{ i.deaths }}</td>
+            <td>{{ i.kda }}</td>
+            <td>{{ i.mvps }}</td>
+            <td>{{ i.roundsPlayed }}</td>
+            <td>{{ i.roundsWon }}</td>
+            <td>{{ i.roundWinPct }}</td>
+            <td>{{ i.killsRound }}</td>
+            <td>{{ i.assistsRound }}</td>
+            <td>{{ i.deathsRound }}</td>
+            <td>{{ i.mvpsGame }}</td>
+            <td>{{ i.gamesPlayed }}</td>
+            <td>{{ i.gamesWon }}</td>
+            <td>{{ i.gameWinPct }}</td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr>No players are available.</tr>
+        {% endif %}
+    </table>
+
+{% endblock %}
+
+

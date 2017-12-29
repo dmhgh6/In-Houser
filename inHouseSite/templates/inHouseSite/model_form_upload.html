@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+
+<!-- Navbar -->
+{% block navbar %}
+
+    <a href="{% url 'model_form_upload' %}" class="w3-bar-item w3-button">Upload Demo</a>
+
+{% endblock %}
+
+
+<!-- Body -->
+{% block content %}
+
+    <title>Upload Demo</title>
+
+    <h3>Upload Demo</h3>
+
+    <form method="post" enctype="multipart/form-data" onsubmit="parseFormData()">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Upload</button>
+    </form>
+{% endblock %}

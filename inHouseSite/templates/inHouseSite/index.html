@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 
+
 <!-- Navbar -->
 {% block navbar %}
 
@@ -53,7 +54,7 @@
         </tr>
         {% endfor %}
         {% else %}
-        <tr>No players are available.</tr>
+        <tr id="nodata">No players are available.</tr>
         {% endif %}
     </table>
 

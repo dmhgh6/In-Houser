@@ -19,7 +19,7 @@ class Player(models.Model):
     @property
     def kda(self):
         if self.deaths != 0:
-            return "{:.2f}".format((self.kills + self.assists) / float(self.deaths))
+            return "{:.2f}".format(self.kills / float(self.deaths))
         else:
             return 0
 
@@ -33,7 +33,7 @@ class Player(models.Model):
     @property
     def roundWinPct(self):
         if self.roundsWon != 0:
-            return "{:.1f}".format(self.roundsWon * 100 / float(self.roundsPlayed)) + "%"
+            return "{:.1f}".format(self.roundsWon * 100 / float(self.roundsPlayed))
         else:
             return 0
 
@@ -61,7 +61,7 @@ class Player(models.Model):
     @property
     def gameWinPct(self):
         if self.gamesWon != 0:
-            return "{:.1f}".format(self.gamesWon * 100 / float(self.gamesPlayed)) + "%"
+            return "{:.1f}".format(self.gamesWon * 100 / float(self.gamesPlayed))
         else:
             return 0
 

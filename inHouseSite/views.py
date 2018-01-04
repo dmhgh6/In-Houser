@@ -5,6 +5,7 @@ from django.template import loader
 from .models import Player, Document
 from .demoinfocsgo.demodump import DemoDump
 import os
+import json
 
 from .forms import DocumentForm
 
@@ -22,35 +23,46 @@ class Players(object):
         self.deaths = 0
         self.assists = 0
         self.mvps = 0
+        self.headshots = 0
         self.won = 0
 
-        self.kills_this_round = 0
-        self.clutch_kills = 0
-        self.is_connected = True
-        self.is_alive = False
         self.team = 0  # 2 is T, 3 is CT?
 
+    def reset_stats(self):
+        print '--------------STATS RESET--------------'
+        self.kills = 0
+        self.deaths = 0
+        self.assists = 0
+        self.mvps = 0
+        self.headshots = 0
 
-class HighlightFinder(object):
+
+class Game(object):
     def __init__(self, filename):
         self.filename = filename
         self.demo = DemoDump()
         self.players = {}
         self.current_round = 0
-        self.highlights = []
+        #self.highlights = []
         self.teamScores = [0, 0] # 0 is CT, 1 is T
         self.roundsPlayed = 0
+
+        self.demo.register_on_gameevent("player_death", self.player_death)
+        #self.demo.register_on_gameevent("round_mvp", self.mvp)
+        self.demo.register_on_gameevent(36, self.round_start)
+        self.demo.register_on_gameevent(42, self.round_end)
 
     def parse(self):
         if self.demo.open(self.filename):
             print "Beginning parsing"
             self.demo.register_on_gameevent(7, self.player_connected)
             self.demo.register_on_gameevent(8, self.player_connected)
-            self.demo.register_on_gameevent(9, self.player_disconnected)
-            self.demo.register_on_gameevent(21, self.player_join_team)
-            self.demo.register_on_gameevent(27, self.player_spawn)
+            #self.demo.register_on_gameevent(9, self.player_disconnected)
+            #self.demo.register_on_gameevent(27, self.player_spawn)
             self.demo.register_on_gameevent(40, self.game_start)  # only start counting when warmup is over
             self.demo.dump()
+            print "Done parsing"
+            print self.players
         else:
             print "Demo unparsable"
         pass
@@ -58,14 +70,10 @@ class HighlightFinder(object):
     def player_connected(self, data):
         if data.userid not in self.players.keys():
             self.players[data.userid] = Players(data.index, data.name, data.userid, data.networkid)
-        self.players[data.userid].is_connected = True
-        print "New player %i" % data.userid
-
-    def player_disconnected(self, data):
-        if data.networkid == 'BOT':  # if bot, just remove
-            self.players.pop(data.userid, None)
-        else:
-            self.players[data.userid].is_connected = False
+        self.players[data.userid].index = data.index
+        self.players[data.userid].name = data.name
+        self.players[data.userid].userid = data.userid
+        self.players[data.userid].networkid = data.networkid
 
     def player_join_team(self, data):
         if data.team == 0:  # disconnect?
@@ -74,16 +82,35 @@ class HighlightFinder(object):
         self.players[data.userid].team = data.team
 
     def player_spawn(self, data):
-        self.players[data.userid].is_alive = True
-        self.players[data.userid].kills_this_round = 0
-        self.players[data.userid].clutch_kills = 0
+        if data.userid not in self.players.keys():
+            self.players[data.userid] = Players(data.index, data.name, data.userid, data.networkid)
 
     def game_start(self, data):
         self.current_round = 0
-        self.demo.register_on_gameevent(36, self.round_start)
-        self.demo.register_on_gameevent(42, self.round_end)
-        self.demo.register_on_gameevent("round_mvp", self.mvp)
-        self.demo.register_on_gameevent(23, self.player_death)
+        for index, player in self.players.items():
+            player.reset_stats()
+
+    def player_death(self, data):
+        if data.userid not in self.players:
+            print "Player %i died, but could not be found" % data.userid
+            return
+
+        self.players[data.userid].deaths += 1
+
+        if data.attacker not in self.players:
+            print "Attacker %i could not be found" % data.attacker
+            return
+
+        if data.userid != data.attacker:  # not suicide? maybe check for same team?
+            self.players[data.attacker].kills += 1
+            if data.headshot:
+                print "%i headshot %i" % (data.attacker, data.userid)
+                self.players[data.attacker].headshots += 1
+            else:
+                print "%i killed %i" % (data.attacker, data.userid)
+
+        #if data.assister != 0:  # someone assisted
+            #self.players[data.assister].assists += 1
 
     def mvp(self, data):
         self.players[data.userid].mvps += 1
@@ -92,7 +119,7 @@ class HighlightFinder(object):
         self.current_round += 1
 
     def round_end(self, data):
-        print "Round ended, winner: %i, reason: %i, message: %s" % (data.winner, data.reason, data.message)
+        print "Round ended, winner: %i " % data.winner
         self.roundsPlayed += 1
         half = self.current_round >= 15
         if not half:
@@ -101,59 +128,8 @@ class HighlightFinder(object):
             self.teamScores[1] += 1
         else:
             self.teamScores[0] += 1
-        for player in self.players.values():
-            if player.kills_this_round >= 3:
-                self.highlights.append(
-                    "%s got a %ik in round %i" % (player.name, player.kills_this_round, self.current_round))
-            if player.is_alive and player.team == data.winner and self.count_alive(
-                    player.team) == 1 and self.count_alive(
-                    self.invert_team(player.team)) == 0 and player.clutch_kills >= 2:
-                self.highlights.append(
-                    "%s clutched a 1v%i in round %i" % (player.name, player.clutch_kills, self.current_round))
 
-    def player_death(self, data):
-        self.players[data.userid].deaths += 1
-        self.players[data.userid].is_alive = False
-
-        if data.userid != data.attacker and self.players[data.attacker].team != self.players[data.userid].team:  # not suicide or team kill?
-            self.players[data.attacker].kills += 1
-            self.players[data.attacker].kills_this_round += 1  # used for finding highlights
-
-            if self.count_alive(self.players[data.attacker].team) == 1:
-                self.players[data.attacker].clutch_kills += 1
-            print "%s killed %s with %s%s" % (
-            self.players[data.attacker].name, self.players[data.userid].name, data.weapon,
-            " (headshot)" if data.headshot else "")
-        else:
-            self.players[data.attacker].kills -= 1
-
-        if data.assister != 0:  # someone assisted DOES THIS NEED TO BE IN THE SUICIDE/TEAM KILL CHECK?
-            self.players[data.assister].assists += 1
-
-    def count_alive(self, teamid):
-        alive = 0
-        for player in self.players.values():
-            if player.is_connected and player.is_alive and player.team == teamid:
-                alive += 1
-        return alive
-
-    def invert_team(self, teamid):
-        if teamid == 2 or teamid == 3:
-            return 3 if teamid == 2 else 2
-        return teamid
-
-    def print_results(self):
-        print "%i players found" % len(self.players)
-        for playerid, player in self.players.items():
-            if player.networkid != "BOT":
-                print vars(player)
-
-        print ""
-        print "Highlights: %i" % len(self.highlights)
-        for highlight in self.highlights:
-            print highlight
-
-    def storeResults(self): #NEED TO CHECK IF THE STEAM ID WAS ALREADY ADDED, NEED TO LIKE PARSE ALL PLAYERS AND REMOVE DUPLICATES BASED ON STEAM ID
+    def storeResults(self):
         steamIds = []
         for playerid, player in self.players.items():
             if self.teamScores[0] > self.teamScores[1] and player.team == 3:
@@ -200,10 +176,10 @@ class HighlightFinder(object):
 # Create your views here.
 def index(request):
     if Document.objects.all().exists():
-        print 'HERE'
+        #print 'HERE'
         filePath = Document.objects.all().get().document.path
         Document.objects.all().delete()
-        print filePath
+        #print filePath
         os.remove(filePath)
     playerList = Player.objects.order_by('name')
     context = {'playerList': playerList}
@@ -217,7 +193,11 @@ def model_form_upload(request):
         form = DocumentForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
-            parseDemoFile(form.instance.document.path)
+            if ".dem" in form.instance.document.path:
+                parseDemoFile(form.instance.document.path)
+            elif ".json" in form.instance.document.path:
+                parseJsonFile(form.instance.document.path)
+
             return redirect('index')
     else:
         form = DocumentForm()
@@ -226,6 +206,61 @@ def model_form_upload(request):
     })
 
 def parseDemoFile(filePath):
-    hlfinder = HighlightFinder(filePath)
-    hlfinder.parse()
-    hlfinder.storeResults()
+    game = Game(filePath)
+    game.parse()
+    game.storeResults()
+
+def parseJsonFile(filePath):
+    game = json.load(open(filePath))
+
+    #Team One Parsing
+    for i in game["TeamOne"]:
+        win = 0
+        if game["TeamOneScore"] > game["TeamTwoScore"]:
+            win = 1
+
+        if Player.objects.filter(steamId=i["SteamId"]).exists():
+            #print "exists"
+            p = Player.objects.get(steamId=i["SteamId"])
+            p.kills += i["Kills"]
+            p.deaths += i["Deaths"]
+            p.assists += i["Assists"]
+            p.mvps += i["Mvps"]
+            p.roundsPlayed += game["TeamOneScore"] + game["TeamTwoScore"]
+            p.roundsWon += game["TeamOneScore"]
+            p.gamesWon += win
+            p.gamesPlayed += 1
+
+            p.save()
+
+        elif not i["isBot"]:
+            p = Player(name=i["Name"], kills=i["Kills"], deaths=i["Deaths"], assists=i["Assists"], mvps=i["Mvps"],
+                       steamId=i["SteamId"], roundsPlayed=game["TeamOneScore"]+game["TeamTwoScore"],
+                       roundsWon=game["TeamOneScore"], gamesPlayed=1, gamesWon=win)
+            p.save()
+
+    # Team Two Parsing
+    for i in game["TeamTwo"]:
+        win = 0
+        if game["TeamOneScore"] < game["TeamTwoScore"]:
+            win = 1
+
+        if Player.objects.filter(steamId=i["SteamId"]).exists():
+            #print "exists"
+            p = Player.objects.get(steamId=i["SteamId"])
+            p.kills += i["Kills"]
+            p.deaths += i["Deaths"]
+            p.assists += i["Assists"]
+            p.mvps += i["Mvps"]
+            p.roundsPlayed += game["TeamOneScore"] + game["TeamTwoScore"]
+            p.roundsWon += game["TeamTwoScore"]
+            p.gamesWon += win
+            p.gamesPlayed += 1
+
+            p.save()
+
+        elif not i["isBot"]:
+            p = Player(name=i["Name"], kills=i["Kills"], deaths=i["Deaths"], assists=i["Assists"], mvps=i["Mvps"],
+                   steamId=i["SteamId"], roundsPlayed=game["TeamOneScore"] + game["TeamTwoScore"],
+                   roundsWon=game["TeamTwoScore"], gamesPlayed=1, gamesWon=win)
+            p.save()

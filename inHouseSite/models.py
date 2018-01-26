@@ -1,10 +1,27 @@
 from django.db import models
 from django.dispatch import receiver
 import os
+
 # Create your models here.
 
 
 class Player(models.Model):
+    nameKey = models.CharField(max_length=50, primary_key=True)
+    name = models.CharField(max_length=50, null=True)
+    kills = models.IntegerField(default=0)
+    deaths = models.IntegerField(default=0)
+    assists = models.IntegerField(default=0)
+    mvps = models.IntegerField(default=0)
+    steamId = models.CharField(max_length=30)
+    teamNumber = models.IntegerField(default=0)
+    seasonNumber = models.IntegerField(default=0)
+    gameNumber = models.IntegerField(default=0)
+
+    def __str__(self):
+        return 'Name: ' + self.nameKey
+
+
+class OverallPlayer(models.Model):
     name = models.CharField(max_length=50)
     kills = models.IntegerField(default=0)
     deaths = models.IntegerField(default=0)
@@ -69,32 +86,20 @@ class Player(models.Model):
         return 'Name: ' + self.name
 
 
-class Team(models.Model):
-    playerOne = models.ForeignKey(Player, related_name='playerOne', on_delete=models.CASCADE)
-    playerTwo = models.ForeignKey(Player, related_name='playerTwo', on_delete=models.CASCADE)
-    playerThree = models.ForeignKey(Player, related_name='playerThree', on_delete=models.CASCADE)
-    playerFour = models.ForeignKey(Player, related_name='playerFour', on_delete=models.CASCADE)
-    playerFive = models.ForeignKey(Player, related_name='playerFive', on_delete=models.CASCADE)
-    roundsWon = models.IntegerField(default=0)
-    won = models.BooleanField(default=False)
-
-    def __str__(self):
-        return 'PlayerOneName: ' + self.playerOne.name
-
-
 class Game(models.Model):
-    map = models.CharField(max_length=50)
-    date = models.DateField()
-    teamOne = models.ForeignKey(Team, related_name='teamOne', on_delete=models.CASCADE)
-    teamTwo = models.ForeignKey(Team, related_name='teamTwo', on_delete=models.CASCADE)
-    roundsPlayed = models.IntegerField(default=0)
+    seasonNumber = models.IntegerField(default=0)
+    gameNumber = models.IntegerField(default=0)
+    map = models.CharField(max_length=20)
+    winner = models.CharField(max_length=20)
+    teamOneScore = models.IntegerField(default=0)
+    teamTwoScore = models.IntegerField(default=0)
 
     def __str__(self):
         return 'Map: ' + self.map
 
 
 class Document(models.Model):
-    document = models.FileField(upload_to='documents/') #file path
+    document = models.FileField(upload_to='documents/')  #file path
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

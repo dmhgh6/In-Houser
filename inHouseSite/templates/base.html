@@ -44,18 +44,68 @@
         background-color: #3a84bc;
         color: white;
     }
+
+    /* Table style settings */
+    #teamOne {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 45%;
+    }
+    #teamOne td, #teamOne th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+    #teamOne tr:nth-child(even){background-color: #f2f2f2;}
+    #teamOne tr:nth-child(odd){background-color: #ffffff;}
+    #teamOne tr:hover {background-color: #ddd;}
+    #teamOne th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #3a84bc;
+        color: white;
+    }
+
+    /* Table style settings */
+    #teamTwo {
+        font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+        border-collapse: collapse;
+        width: 45%;
+    }
+    #teamTwo td, #teamTwo th {
+        border: 1px solid #ddd;
+        padding: 8px;
+    }
+    #teamTwo tr:nth-child(even){background-color: #f2f2f2;}
+    #teamTwo tr:nth-child(odd){background-color: #ffffff;}
+    #teamTwo tr:hover {background-color: #ddd;}
+    #teamTwo th {
+        padding-top: 12px;
+        padding-bottom: 12px;
+        text-align: left;
+        background-color: #3a84bc;
+        color: white;
+    }
 </style>
 
 <body>
     <!-- Navbar  -->
     <div class="w3-top">
+
         <div class="w3-bar w3-dark-gray w3-card" id="myNavbar">
         <a href="{% url 'index' %}" class="w3-bar-item w3-button w3-wide">IN HOUSE</a>
-            <!-- Right-sided navbar links -->
+
+            <!-- Upload Demo -->
             <div class="w3-right">
-                {% block navbar %}
-                {% endblock %}
+                <a href="{% url 'model_form_upload' %}" class="w3-bar-item w3-button">Upload Demo</a>
             </div>
+
+            <!-- Seasons -->
+            <a href="{% url 'games' %}" class="w3-bar-item w3-button">Games</a>
+
+            <!-- Players -->
+            <a href="{% url 'players' %}" class="w3-bar-item w3-button">Players</a>
+
         </div>
     </div>
 
@@ -116,5 +166,15 @@ function sortTable(n) {
       }
     }
   }
+}
+</script>
+
+<script>
+function getDropdownValue() {
+    var s = document.getElementById("season_dropdown").value;
+    var g = document.getElementById("game_dropdown").value;
+    console.log(s, g);
+
+
 }
 </script>

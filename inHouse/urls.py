@@ -13,10 +13,9 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls import include
+from django.conf.urls import include, url
 from django.contrib import admin
 from inHouseSite import views
-from django.conf.urls import url
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
@@ -24,7 +23,8 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 urlpatterns = [
     url('admin/', admin.site.urls),
     url(r'^upload/$', views.model_form_upload, name='model_form_upload'),
-    url(r'^upload$', views.model_form_upload, name='model_form_upload'),
+    url(r'^games/$', views.games, name='games'),
+    url(r'^players/$', views.players, name='players'),
     url(r'^', include('inHouseSite.urls'))
 ]
 

@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+<!-- Body -->
+{% block content %}
+
+    <title>Games</title>
+
+    <h3>Games</h3>
+
+    <form method="get" action="/games/">
+
+        <select id="season_dropdown">
+            <option value=1>Season 1</option>
+            <option value=2>Season 2</option>
+        </select>
+
+        <select id="game_dropdown" onchange="this.form.submit()">
+            <option disabled selected>Select a Game</option>
+            <option value=1>Game 1</option>
+            <option value=2>Game 2</option>
+            <option value=3>Game 3</option>
+            <option value=4>Game 4</option>
+            <option value=5>Game 5</option>
+            <option value=6>Game 6</option>
+            <option value=7>Game 7</option>
+            <option value=8>Game 8</option>
+        </select>
+    </form>
+
+
+
+    <div>
+        <table id="teamOne" style="float: left">
+            {% if game %}
+                {% for i in game %}
+                    <tr>
+                        <td>Map: {{ i.map }}</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>Score: {{ i.teamOneScore }}</td>
+                    </tr>
+
+                {% endfor %}
+            {% endif %}
+            <tr>
+                <th>Player</th>
+                <th>Kills</th>
+                <th>Assists</th>
+                <th>Deaths</th>
+                <th>MVPs</th>
+            </tr>
+            {% if teamOneList %}
+                {% for i in teamOneList %}
+                <tr align="right">
+                    <td align="left">{{ i.name }}</td>
+                    <td>{{ i.kills }}</td>
+                    <td>{{ i.assists }}</td>
+                    <td>{{ i.deaths }}</td>
+                    <td>{{ i.mvps }}</td>
+                </tr>
+                {% endfor %}
+            {% endif %}
+        </table>
+
+        <table id="teamTwo" style="float: right">
+        {% if game %}
+                {% for i in game %}
+                    <tr>
+                        <td>Score: {{ i.teamTwoScore }}</td>
+                    </tr>
+                {% endfor %}
+            {% endif %}
+        <tr>
+            <th>Player</th>
+            <th>Kills</th>
+            <th>Assists</th>
+            <th>Deaths</th>
+            <th>MVPs</th>
+        </tr>
+        {% if teamTwoList %}
+            {% for i in teamTwoList %}
+            <tr align="right">
+                <td align="left">{{ i.name }}</td>
+                <td>{{ i.kills }}</td>
+                <td>{{ i.assists }}</td>
+                <td>{{ i.deaths }}</td>
+                <td>{{ i.mvps }}</td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+        </table>
+    </div>
+
+{% endblock %}
